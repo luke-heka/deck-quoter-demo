@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { DeckConfig } from "../lib/types";
+import type { DeckConfig, PriceBook } from "../lib/types";
 
 type Extraction = DeckConfig & { confidence: number; notes: string };
 
@@ -9,13 +9,14 @@ type Props = {
   open: boolean;
   onClose: () => void;
   currentCfg: DeckConfig;
+  pricebook: PriceBook;
   onApply: (cfg: DeckConfig) => void;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SR = any;
 
-export default function SiteCapture({ open, onClose, currentCfg, onApply }: Props) {
+export default function SiteCapture({ open, onClose, currentCfg, pricebook, onApply }: Props) {
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [transcript, setTranscript] = useState("");
@@ -83,6 +84,8 @@ export default function SiteCapture({ open, onClose, currentCfg, onApply }: Prop
       const fd = new FormData();
       if (photo) fd.append("photo", photo);
       if (transcript.trim()) fd.append("transcript", transcript.trim());
+      const materials = Object.entries(pricebook.materials).map(([key, m]) => ({ key, label: m.label }));
+      fd.append("materials", JSON.stringify(materials));
       const res = await fetch("/api/extract", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) {
@@ -126,8 +129,14 @@ export default function SiteCapture({ open, onClose, currentCfg, onApply }: Prop
             <h2 className="font-semibold text-base">Capture from site visit</h2>
             <p className="text-xs text-zinc-500 -mt-0.5">Photo (optional) + voice note → AI extracts the deck spec.</p>
           </div>
-          <button type="button" onClick={() => { reset(); onClose(); }} className="text-zinc-500 hover:text-zinc-200 p-1">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M14.7 5.3a1 1 0 0 0-1.4 0L10 8.6 6.7 5.3a1 1 0 0 0-1.4 1.4L8.6 10l-3.3 3.3a1 1 0 1 0 1.4 1.4L10 11.4l3.3 3.3a1 1 0 0 0 1.4-1.4L11.4 10l3.3-3.3a1 1 0 0 0 0-1.4z"/></svg>
+          <button
+            type="button"
+            aria-label="Close site capture"
+            title="Close"
+            onClick={() => { reset(); onClose(); }}
+            className="text-zinc-500 hover:text-zinc-200 p-1"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M14.7 5.3a1 1 0 0 0-1.4 0L10 8.6 6.7 5.3a1 1 0 0 0-1.4 1.4L8.6 10l-3.3 3.3a1 1 0 1 0 1.4 1.4L10 11.4l3.3 3.3a1 1 0 0 0 1.4-1.4L11.4 10l3.3-3.3a1 1 0 0 0 0-1.4z"/></svg>
           </button>
         </div>
 

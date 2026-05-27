@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import QuoteForm from "./components/QuoteForm";
 import QuoteSummary from "./components/QuoteSummary";
 import SiteCapture from "./components/SiteCapture";
-import pricebookJson from "./lib/pricebook.json";
+import SettingsModal from "./components/SettingsModal";
+import { usePricebook } from "./lib/usePricebook";
 import { calcQuote, fmtMoney } from "./lib/pricing";
-import type { DeckConfig, PriceBook } from "./lib/types";
+import type { DeckConfig } from "./lib/types";
 
 const DeckScene = dynamic(() => import("./components/DeckScene"), {
   ssr: false,
@@ -15,8 +16,6 @@ const DeckScene = dynamic(() => import("./components/DeckScene"), {
     <div className="w-full h-full flex items-center justify-center text-zinc-500 text-sm">Loading 3D engine…</div>
   ),
 });
-
-const pricebook = pricebookJson as PriceBook;
 
 const initialCfg: DeckConfig = {
   length: 6,
@@ -30,13 +29,24 @@ const initialCfg: DeckConfig = {
 };
 
 export default function Home() {
+  const { pricebook, logoDataUrl, hydrated, update, updateLogo, reset } = usePricebook();
   const [cfg, setCfg] = useState<DeckConfig>(initialCfg);
   const [customer, setCustomer] = useState({ name: "", address: "" });
   const [generating, setGenerating] = useState(false);
   const [captureOpen, setCaptureOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const sceneRef = useRef<HTMLDivElement>(null);
 
-  const quote = useMemo(() => calcQuote(cfg, pricebook), [cfg]);
+  // Snap material key back into a valid one when the pricebook changes
+  useEffect(() => {
+    if (!hydrated) return;
+    if (!pricebook.materials[cfg.materialKey]) {
+      const first = Object.keys(pricebook.materials)[0];
+      if (first) setCfg({ ...cfg, materialKey: first });
+    }
+  }, [hydrated, pricebook, cfg]);
+
+  const quote = useMemo(() => calcQuote(cfg, pricebook), [cfg, pricebook]);
 
   async function handleDownload() {
     setGenerating(true);
@@ -46,7 +56,14 @@ export default function Home() {
       const { pdf } = await import("@react-pdf/renderer");
       const { default: QuotePDF } = await import("./components/QuotePDF");
       const blob = await pdf(
-        <QuotePDF cfg={cfg} quote={quote} pricebook={pricebook} customer={customer} renderDataUrl={renderDataUrl} />,
+        <QuotePDF
+          cfg={cfg}
+          quote={quote}
+          pricebook={pricebook}
+          customer={customer}
+          renderDataUrl={renderDataUrl}
+          logoDataUrl={logoDataUrl ?? undefined}
+        />,
       ).toBlob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -67,25 +84,39 @@ export default function Home() {
       <header className="border-b border-zinc-900 bg-zinc-950/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-5 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
-              <span className="text-zinc-950 font-bold text-sm">D</span>
-            </div>
+            {logoDataUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoDataUrl} alt="logo" className="w-8 h-8 rounded-lg object-cover bg-zinc-800" />
+            ) : (
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
+                <span className="text-zinc-950 font-bold text-sm">D</span>
+              </div>
+            )}
             <div>
               <div className="font-semibold text-sm tracking-tight">{pricebook.business.name}</div>
               <div className="text-xs text-zinc-500 -mt-0.5">{pricebook.business.tagline}</div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="hidden md:block text-right">
+          <div className="flex items-center gap-2">
+            <div className="hidden md:block text-right mr-1">
               <div className="text-xs text-zinc-500">Live quote</div>
               <div className="text-base font-semibold text-amber-400 tabular-nums -mt-0.5">{fmtMoney(quote.total, pricebook.currency)}</div>
             </div>
             <button
               type="button"
+              aria-label="Settings"
+              title="Settings"
+              onClick={() => setSettingsOpen(true)}
+              className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 6a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm6.7 3.2-1.4-.4a5 5 0 0 0-.5-1.3l.7-1.3a.5.5 0 0 0-.1-.6L14 4.6a.5.5 0 0 0-.6-.1L12 5.2a5 5 0 0 0-1.3-.5L10.3 3.3a.5.5 0 0 0-.5-.4H9a.5.5 0 0 0-.5.4l-.4 1.4a5 5 0 0 0-1.3.5L5.5 4.5a.5.5 0 0 0-.6.1L3.5 7a.5.5 0 0 0-.1.6l.7 1.3a5 5 0 0 0-.5 1.3L3.2 10.5a.5.5 0 0 0-.4.5v.8c0 .2.2.4.4.5l1.4.4a5 5 0 0 0 .5 1.3l-.7 1.3a.5.5 0 0 0 .1.6L5.9 17a.5.5 0 0 0 .6.1l1.3-.7a5 5 0 0 0 1.3.5l.4 1.4c0 .2.3.4.5.4h.8c.2 0 .4-.2.5-.4l.4-1.4a5 5 0 0 0 1.3-.5l1.3.7a.5.5 0 0 0 .6-.1l1.4-1.4a.5.5 0 0 0 .1-.6l-.7-1.3a5 5 0 0 0 .5-1.3l1.4-.4a.5.5 0 0 0 .4-.5v-.8a.5.5 0 0 0-.4-.5z"/></svg>
+            </button>
+            <button
+              type="button"
               onClick={() => setCaptureOpen(true)}
               className="hidden sm:inline-flex px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-sm font-medium transition-colors items-center gap-1.5"
             >
-              <span>📷</span> Capture from site
+              <span>📷</span> Capture
             </button>
             <button
               type="button"
@@ -140,7 +171,18 @@ export default function Home() {
         open={captureOpen}
         onClose={() => setCaptureOpen(false)}
         currentCfg={cfg}
+        pricebook={pricebook}
         onApply={(next) => setCfg(next)}
+      />
+
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        pricebook={pricebook}
+        logoDataUrl={logoDataUrl}
+        onUpdate={update}
+        onUpdateLogo={updateLogo}
+        onReset={reset}
       />
     </main>
   );

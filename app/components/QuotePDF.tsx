@@ -50,21 +50,29 @@ export default function QuotePDF({
   pricebook,
   customer,
   renderDataUrl,
+  logoDataUrl,
 }: {
   cfg: DeckConfig;
   quote: Quote;
   pricebook: PriceBook;
   customer: { name: string; address: string };
   renderDataUrl?: string;
+  logoDataUrl?: string;
 }) {
   const material = pricebook.materials[cfg.materialKey];
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
-          <View>
-            <Text style={styles.brand}>{pricebook.business.name}</Text>
-            <Text style={styles.tagline}>{pricebook.business.tagline}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            {logoDataUrl && (
+              // eslint-disable-next-line jsx-a11y/alt-text
+              <Image src={logoDataUrl} style={{ width: 36, height: 36, borderRadius: 4 }} />
+            )}
+            <View>
+              <Text style={styles.brand}>{pricebook.business.name}</Text>
+              <Text style={styles.tagline}>{pricebook.business.tagline}</Text>
+            </View>
           </View>
           <View>
             <Text style={styles.contact}>{pricebook.business.email}</Text>
