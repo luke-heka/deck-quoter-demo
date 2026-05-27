@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import QuoteForm from "./components/QuoteForm";
 import QuoteSummary from "./components/QuoteSummary";
+import SiteCapture from "./components/SiteCapture";
 import pricebookJson from "./lib/pricebook.json";
 import { calcQuote, fmtMoney } from "./lib/pricing";
 import type { DeckConfig, PriceBook } from "./lib/types";
@@ -32,6 +33,7 @@ export default function Home() {
   const [cfg, setCfg] = useState<DeckConfig>(initialCfg);
   const [customer, setCustomer] = useState({ name: "", address: "" });
   const [generating, setGenerating] = useState(false);
+  const [captureOpen, setCaptureOpen] = useState(false);
   const sceneRef = useRef<HTMLDivElement>(null);
 
   const quote = useMemo(() => calcQuote(cfg, pricebook), [cfg]);
@@ -80,11 +82,18 @@ export default function Home() {
             </div>
             <button
               type="button"
+              onClick={() => setCaptureOpen(true)}
+              className="hidden sm:inline-flex px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-sm font-medium transition-colors items-center gap-1.5"
+            >
+              <span>📷</span> Capture from site
+            </button>
+            <button
+              type="button"
               onClick={handleDownload}
               disabled={generating}
               className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold text-sm disabled:opacity-50 transition-colors"
             >
-              {generating ? "Generating…" : "Download Quote PDF"}
+              {generating ? "Generating…" : "Download PDF"}
             </button>
           </div>
         </div>
@@ -109,6 +118,15 @@ export default function Home() {
             <DeckScene cfg={cfg} pricebook={pricebook} />
           </div>
           <QuoteSummary quote={quote} pricebook={pricebook} />
+          <div className="sm:hidden">
+            <button
+              type="button"
+              onClick={() => setCaptureOpen(true)}
+              className="w-full px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-sm font-medium transition-colors flex items-center justify-center gap-1.5"
+            >
+              <span>📷</span> Capture from site
+            </button>
+          </div>
           <div className="text-xs text-zinc-600 text-center pb-2">
             Drag to rotate · scroll to zoom · prices update instantly · workshop demo by{" "}
             <a href="https://selr.ai" className="text-zinc-500 hover:text-amber-400">
@@ -117,6 +135,13 @@ export default function Home() {
           </div>
         </section>
       </div>
+
+      <SiteCapture
+        open={captureOpen}
+        onClose={() => setCaptureOpen(false)}
+        currentCfg={cfg}
+        onApply={(next) => setCfg(next)}
+      />
     </main>
   );
 }
