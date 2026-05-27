@@ -1,0 +1,55 @@
+{
+  "currency": "AUD",
+  "materials": {
+    "spotted-gum": {
+      "label": "Spotted Gum (premium hardwood)",
+      "pricePerSqm": 185,
+      "color": "#a05a3c"
+    },
+    "merbau": {
+      "label": "Merbau (hardwood)",
+      "pricePerSqm": 145,
+      "color": "#6b3a1f"
+    },
+    "treated-pine": {
+      "label": "Treated Pine (softwood)",
+      "pricePerSqm": 75,
+      "color": "#c9a86a"
+    },
+    "composite-charcoal": {
+      "label": "Composite — Charcoal",
+      "pricePerSqm": 165,
+      "color": "#3a3a3a"
+    },
+    "composite-walnut": {
+      "label": "Composite — Walnut",
+      "pricePerSqm": 165,
+      "color": "#4d342a"
+    }
+  },
+  "structural": {
+    "joistsPerSqm": 38,
+    "bearersPerSqm": 22,
+    "postEach": 95,
+    "footingEach": 65
+  },
+  "extras": {
+    "railingPerLinearM": 145,
+    "stairsPerStep": 240,
+    "stairTreadRise": 0.18
+  },
+  "labour": {
+    "ratePerSqm": 220,
+    "stairsFlatFee": 480,
+    "railingPerLinearM": 38
+  },
+  "margin": 0.18,
+  "gst": 0.1,
+  "business": {
+    "name": "Your Business Name",
+    "tagline": "On-the-spot 3D deck quotes",
+    "email": "hello@yourbusiness.com.au",
+    "phone": "+61 4XX XXX XXX",
+    "abn": "00 000 000 000"
+  }
+}
